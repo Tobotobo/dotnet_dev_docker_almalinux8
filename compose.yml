@@ -14,10 +14,12 @@ services:
     ports:
       - ${SSH_PORT}:22
     volumes:
-      - ./ssh_host_keys:/etc/ssh/ssh_host_keys
-      - home:/home
-    tty: true
+      - projects:/home/${USER_NAME}/projects
+      - ${HOME}/.ssh:/home/${USER_NAME}/.ssh:ro
+      - /etc/ssh/ssh_host_ecdsa_key:/etc/ssh/ssh_host_ecdsa_key:ro
+      - /etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
+      - /etc/ssh/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
     restart: unless-stopped
 
 volumes:
-  home:
+  projects:
