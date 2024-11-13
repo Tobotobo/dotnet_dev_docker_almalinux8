@@ -4,6 +4,7 @@ FROM almalinux:${VARIANT}
 
 RUN dnf update -y \
     && dnf install -y epel-release \
+    && dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo \
     && dnf install -y --enablerepo=epel \
         glibc-langpack-ja \
         glibc-locale-source \
@@ -15,7 +16,8 @@ RUN dnf update -y \
         wget \
         zip \
         nano \ 
-        htop
+        htop \
+        docker-ce-cli
 
 # ロケール及びタイムゾーンを日本に設定
 RUN localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
@@ -61,9 +63,26 @@ RUN groupadd --gid ${USER_GID} ${USER_NAME} \
     && chmod 0440 /etc/sudoers.d/${USER_NAME} \
     && echo "${USER_NAME}:${USER_PASSWORD}" | chpasswd
 
+# Docker グループの GID 変更とユーザー追加
+ARG DOCKER_GID
+RUN groupmod -g ${DOCKER_GID} docker \
+    && usermod -aG docker ${USER_NAME}
+
+# 追加したユーザーのホーム内に .vscode-server フォルダ作成 ※永続化用
+RUN mkdir "/home/${USER_NAME}/.vscode-server" \
+    && chown ${USER_UID}:${USER_GID} "/home/${USER_NAME}/.vscode-server"
+
 # 追加したユーザーを諸々の開発ツールのインストール先のオーナーに設定
 RUN chown -R ${USER_UID}:${USER_GID} "${DEV_TOOLS_DIR}" \
     && chmod -R 775 "${DEV_TOOLS_DIR}"
+
+# 追加したユーザーのホーム内に setup_vscode.sh を配置
+COPY setup_vscode.sh "/home/${USER_NAME}/setup_vscode.sh"
+COPY vscode_setup_files "/home/${USER_NAME}/vscode_setup_files"
+RUN chown ${USER_UID}:${USER_GID} "/home/${USER_NAME}/setup_vscode.sh" \
+    && chmod +x "/home/${USER_NAME}/setup_vscode.sh" \
+    && chown ${USER_UID}:${USER_GID} "/home/${USER_NAME}/vscode_setup_files" \
+    && chmod +x -R "/home/${USER_NAME}/vscode_setup_files"
 
 # 追加したユーザーのホーム内に projects フォルダ作成 ※永続化用
 RUN mkdir "/home/${USER_NAME}/projects" \

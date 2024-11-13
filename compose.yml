@@ -10,16 +10,21 @@ services:
         USER_PASSWORD: ${USER_PASSWORD}
         USER_UID: ${USER_UID}
         USER_GID: ${USER_GID}
+        DOCKER_GID: ${DOCKER_GID}
     user: ${USER_UID}:${USER_GID}
     ports:
       - ${SSH_PORT}:22
     volumes:
-      - projects:/home/${USER_NAME}/projects
-      - ${HOME}/.ssh:/home/${USER_NAME}/.ssh:ro
+      - /var/run/docker.sock:/var/run/docker.sock
       - /etc/ssh/ssh_host_ecdsa_key:/etc/ssh/ssh_host_ecdsa_key:ro
       - /etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
       - /etc/ssh/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
+      - ${HOME}/.ssh:/home/${USER_NAME}/.ssh:ro
+      - vscode-server:/home/${USER_NAME}/.vscode-server
+      - projects:/home/${USER_NAME}/projects
+
     restart: unless-stopped
 
 volumes:
+  vscode-server:
   projects:
